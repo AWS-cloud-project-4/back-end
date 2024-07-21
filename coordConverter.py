@@ -4,6 +4,7 @@ from getCoord import latlng
 NX = 149  # X축 격자점 수
 NY = 253  # Y축 격자점 수
 
+
 class LamcParameter:
     def __init__(self):
         self.Re = 6371.00877  # 사용할 지구반경 [ km ]
@@ -50,16 +51,15 @@ def lamcproj(lon, lat, map):
 
     return x, y
 
-def main():
+def getXY():
     map = LamcParameter()
-
-    # 위도와 경도 값을 여기서 지정
     lat = latlng[0]
     lon = latlng[1]
-
-
     x, y = lamcproj(lon, lat, map)
-    print(f"lon.= {lon}, lat.= {lat} ---> X = {math.floor(x + 0.5)+1}, Y = {math.floor(y + 0.5)+1}")
-
-if __name__ == "__main__":
-    main()
+    x = math.floor(x + 0.5)+1
+    y = math.floor(y + 0.5)+1
+    print(f"lon.= {lon}, lat.= {lat} ---> X = {x}, Y = {y}")
+    
+    grid = [x, y]
+    # print(grid)
+    return grid
