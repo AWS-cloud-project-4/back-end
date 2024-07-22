@@ -3,7 +3,7 @@ import pymysql.cursors
 
 mysql_db = {
     "user": "root",
-    "password": "abc1234!!",
+    "password": "0000",
     "host": "localhost",
     "port": 3306,
     "database": "locations",
