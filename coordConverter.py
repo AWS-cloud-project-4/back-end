@@ -63,3 +63,5 @@ def getXY():
     grid = [x, y]
     # print(grid)
     return grid
+
+# 위도, 경도를 이용해 x, y 좌표 반환 grid = [x, y]

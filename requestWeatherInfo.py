@@ -2,11 +2,10 @@ import requests
 import datetime
 import xml.etree.ElementTree as ET
 from urllib.parse import urlencode, unquote
-from getAddress import city, district
 import coordConverter
 from getCoord import latlng
 
-# 공공데이터포털 API 키 (디코딩 인증키 사용)
+# 공공데이터포털 API 키
 key = "LtdxOHrcMwiMD%2BePsgB0et3yhiPhClBBWX5o5IBrjsyJv95ixqjCjuHIRvX2KqKpZ3J6Zrk39xxAk8N9aSeu%2BQ%3D%3D"
 api_key = unquote(unquote(key))
 
@@ -26,12 +25,20 @@ def get_nearest_base_time(current_time):
     return f"{nearest_hour:02d}00"
 
 # 현재 시각 및 base_time 설정
-current_time = datetime.datetime.now()
-# base_time = get_nearest_base_time(current_time)
-base_time = '2300'
+def get_base_time():
+    current_time = datetime.datetime.now()
+    return get_nearest_base_time(current_time)
+
+# base_time을 3시간 이전으로 조정
+def adjust_base_time(base_time):
+    base_hour = int(base_time[:2])
+    adjusted_hour = base_hour - 3
+    if adjusted_hour < 0:
+        adjusted_hour += 24
+    return f"{adjusted_hour:02d}00"
 
 # Function to fetch weather data from the first API (getVilageFcst)
-def fetch_vilage_fcst_data(base_date):
+def fetch_vilage_fcst_data(base_date, base_time):
     url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
     params = {
         "serviceKey": api_key,  # 인코딩된 API 키 사용
@@ -99,7 +106,7 @@ def fetch_vilage_fcst_data(base_date):
         return None
 
 # Function to fetch real-time weather data from the second API (getUltraSrtNcst)
-def fetch_ultra_srt_ncst_data(base_date):
+def fetch_ultra_srt_ncst_data(base_date, base_time):
     url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst"
     params = {
         "serviceKey": api_key,  # 인코딩된 API 키 사용
@@ -113,6 +120,7 @@ def fetch_ultra_srt_ncst_data(base_date):
     }
     full_url = f"{url}?{urlencode(params, safe=':=')}"
     print("Fetching URL:", full_url)
+    print(f"현재 base_time: {base_time}")
     response = requests.get(full_url)
 
     if response.status_code == 200:
@@ -166,21 +174,31 @@ def fetch_ultra_srt_ncst_data(base_date):
         print("Error: API 요청이 실패했습니다.")
         return None
 
-# 오늘 날짜
+# 오늘 날짜와 base_time 설정
 base_date = datetime.datetime.now().strftime("%Y%m%d")
+base_time = get_base_time()
 
 # 오늘 날짜로 데이터 요청
-weather_data = fetch_vilage_fcst_data(base_date)
-ultra_srt_ncst_data = fetch_ultra_srt_ncst_data(base_date)
+weather_data = fetch_vilage_fcst_data(base_date, base_time)
+ultra_srt_ncst_data = fetch_ultra_srt_ncst_data(base_date, base_time)
 
-# 데이터가 없을 경우, 이전 날짜로 데이터 요청
+# 데이터가 없을 경우, base_time을 3시간 이전으로 조정하고 재시도
 if weather_data is None or ultra_srt_ncst_data is None:
-    yesterday = datetime.datetime.now() - datetime.timedelta(1)
-    base_date = yesterday.strftime("%Y%m%d")
-    base_time = '2300'
-    print(f"Fetching data for previous day: {base_date}")
-    weather_data = fetch_vilage_fcst_data(base_date)
-    ultra_srt_ncst_data = fetch_ultra_srt_ncst_data(base_date)
+    base_time = adjust_base_time(base_time)
+    print(f"Retrying with adjusted base_time: {base_time}")
+    weather_data = fetch_vilage_fcst_data(base_date, base_time)
+    ultra_srt_ncst_data = fetch_ultra_srt_ncst_data(base_date, base_time)
+
+# 데이터가 여전히 없을 경우, 자정부터 2시 사이일 경우에만 날짜를 전날로 변경하여 요청
+if weather_data is None or ultra_srt_ncst_data is None:
+    current_time = datetime.datetime.now()
+    if current_time.hour < 2 or (current_time.hour == 2 and current_time.minute == 0):
+        yesterday = current_time - datetime.timedelta(1)
+        base_date = yesterday.strftime("%Y%m%d")
+        base_time = "2300"  # 전날 데이터 요청 시 base_time을 2300으로 고정
+        print(f"Fetching data for previous day: {base_date} with base_time {base_time}")
+        weather_data = fetch_vilage_fcst_data(base_date, base_time)
+        ultra_srt_ncst_data = fetch_ultra_srt_ncst_data(base_date, base_time)
 
 # 결과 통합
 result = {
@@ -195,4 +213,7 @@ print(f"습도: {result.get('humidity')}%")
 print(f"최저 기온: {result.get('min_temperature')}°C")
 print(f"최고 기온: {result.get('max_temperature')}°C")
 print(f"강수량: {result.get('precipitation')}mm")
-print(f"기준 시각 (base_time): {base_time}")
+
+# 현재 위치의 날씨 API 정보 출력
+# 습도, 최저 기온, 최고 기온, 강수량
+# NO_DATA 에러(현재 시간에서 데이터 찾을 수 없음) 발생 시 3시간 전에 발표된 데이터 자료 출력
