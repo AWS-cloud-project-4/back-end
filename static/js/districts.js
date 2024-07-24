@@ -1,10 +1,10 @@
+// districts.js
 function updateDistricts(city) {
     const districtDropdown = document.querySelector('#districtButton + .dropdown-menu');
     const districtButton = document.getElementById('districtButton');
     const map = document.getElementById('map');
     const info = document.getElementById('info');
     const table = document.getElementById('table');
-
 
     // 지도와 정보 숨기기
     map.style.display = 'none';
@@ -22,12 +22,12 @@ function updateDistricts(city) {
                 
                 // 새로 생성된 구 목록 항목에 이벤트 리스너 추가
                 districtDropdown.querySelectorAll('a').forEach(item => {
-                    item.addEventListener('click', function(e) {
+                    item.addEventListener('click', async function(e) {
                         e.preventDefault();
                         const selectedDistrict = this.getAttribute('data-value');
                         districtButton.textContent = selectedDistrict;
                         districtButton.setAttribute('data-value', selectedDistrict);
-                        showMapAndInfo(selectedDistrict);
+                        await showMapAndInfo(selectedDistrict); // `await` 추가
                     });
                 });
             })
@@ -42,17 +42,17 @@ function updateDistricts(city) {
 
 // 시 버튼 클릭 시 서울시 선택 여부에 따라 구 목록 업데이트
 document.querySelectorAll('#cityButton + .dropdown-menu a').forEach(item => {
-    item.addEventListener('click', function(event) {
+    item.addEventListener('click', async function(event) {
         event.preventDefault();
         const selectedCity = event.target.getAttribute('data-value');
         const cityButton = document.getElementById('cityButton');
         cityButton.textContent = selectedCity;
         cityButton.setAttribute('data-value', selectedCity);
-        updateDistricts(selectedCity);
+        await updateDistricts(selectedCity); // `await` 추가
     });
 });
 
 // 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', () => {
-    updateDistricts('서울');  // 초기에 서울 구 목록을 로드
+document.addEventListener('DOMContentLoaded', async () => {
+    await updateDistricts('서울');  // 초기에 서울 구 목록을 로드
 });
