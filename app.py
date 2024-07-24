@@ -6,6 +6,7 @@ import joblib
 import pandas as pd
 from createUser import create_user
 import checkdLogin
+from coordConverter import getXY, getWeather
 from functools import wraps
 import numpy as np
 
@@ -14,7 +15,7 @@ app.secret_key = "mozzy_guard"
 CORS(app)
 
 # 모델 및 스케일러 로드
-model = joblib.load('models/mosquito_model.pkl')
+model = joblib.load('back-end/models/mosquito_model.pkl')
 
 # 로그인 상태 확인
 def login_required(f):
@@ -24,39 +25,6 @@ def login_required(f):
             return redirect(url_for('login'))  # 로그인 페이지로 리디렉션
         return f(*args, **kwargs)
     return decorated_function
-
-# Get the current location based on IP address
-g = geocoder.ip('me')
-
-# 위도, 경도 추출
-latlng = g.latlng
-
-# 현재 위치 위도, 경도 출력
-print(f"Latitude: {latlng[0]}, Longitude: {latlng[1]}")
-
-def geocoding_reverse(lat, lng):
-    geolocoder = Nominatim(user_agent='South Korea', timeout=None)
-    location = geolocoder.reverse((lat, lng))
-
-    if location:
-        address = location.address
-        address_parts = address.split(', ')
-        
-        # 시와 구를 저장할 변수
-        city = None
-        district = None
-        
-        # "시"와 "구"를 포함한 부분을 찾기
-        for part in address_parts:
-            if part.endswith("시"):
-                city = part
-            elif part.endswith("구"):
-                district = part
-                
-        return city, district
-    else:
-        return None, None
-
 
 @app.route('/')
 def index():
@@ -104,6 +72,35 @@ def logout():
     session.pop('user_id', None)
     # Redirect to the root index.html
     return redirect(url_for('index'))
+
+@app.route('/receive_location', methods=['POST'])
+def receive_location():
+    if request.content_type != 'application/json':
+        return jsonify({'error': 'Unsupported Media Type, expected application/json'}), 415
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid JSON data'}), 400
+    
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+    
+    if latitude is None or longitude is None:
+        return jsonify({'error': 'Missing latitude or longitude'}), 400
+    
+    # 위도와 경도를 사용하여 x, y 좌표 계산
+    grid = getXY(latitude, longitude)
+    weathers = getWeather(grid[0], grid[1])
+    
+    # 결과를 JSON 형식으로 반환
+    return jsonify({
+        'x': grid[0],
+        'y': grid[1],
+        'humidity': weathers.get('humidity'),
+        'min_temperature': weathers.get('min_temperature'),
+        'max_temperature': weathers.get('max_temperature'),
+        'precipitation': weathers.get('precipitation')
+    })
 
 @app.route('/map')
 @login_required  # 로그인 상태일 때만 접근 가능

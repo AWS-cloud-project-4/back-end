@@ -1,3 +1,5 @@
+let latitude, longitude;
+
 // 위치 정보를 가져오는 함수
 function success(position) {
     const latitude = position.coords.latitude;
@@ -22,7 +24,11 @@ function success(position) {
             console.error('Error fetching address:', error);
             document.getElementById('location').textContent = '위치 정보를 가져오는 데 오류가 발생했습니다.';
         });
+        
+        // 날씨 데이터를 가져오는 함수 호출
+        fetchWeatherData(latitude, longitude);
 }
+
 
 function error() {
     document.getElementById('location').textContent = "현재 위치를 가져올 수 없습니다.";
