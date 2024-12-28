@@ -19,7 +19,20 @@
 - **ML**: scikit-learn</br>
 - **개발 도구**: Git / Github, Notion</br>
 ---
+## **발생 이슈 및 해결 방안**
+**문제 1: EC2 Instance에서 requirements.txt 설치 실패**
 
+**해결 방안**
+
+1. pip3으로 업그레이드
+2. sudo apt-get install python3-distutils 명령을 이용한 의존성 설치
+
+**문제 2: AWS SSL/TLS 인증서 발급 대기 시간 지연 발생**
+
+**해결 방안**
+
+1. AWS ACM 대신 Gabia에서 인증서를 받아 외부 인증서를 등록하여 문제 해결
+---
 ## 머신 러닝 제작<br>
 - **데이터 수집 및 전처리**: 모기 채집 데이터, 기후 데이터(평균 기온, 최고/최저 기온, 일교차, 강수량, 평균 습도), 서울시 모기지수 데이터
 - **모델 테스트 및 분석**:
@@ -27,7 +40,6 @@
   2. 생성한 지수와 서울시 지수의 분산편차 적용
 - **학습 결과**: 최종 모기 지수의 결정계수는 **0.63**으로 서울시 모기지수의 결정계수보다 **0.03** 상승</br>
 ![image](https://github.com/user-attachments/assets/1421d698-2344-4e93-af82-5337f58d7d87)
-
 
 ## 시스템 구성도</br>
 ![image](https://github.com/user-attachments/assets/69908230-756b-4ca6-abfd-7551d0ca0b58)
@@ -42,6 +54,10 @@
 </br></br>
 
 ## 최종 결과물 </br>
+![mozzyguard architecture](https://github.com/user-attachments/assets/f460b4f1-b243-4c3a-8957-71b6964fe7f1)
+
+최종 아키텍처</br>
+
 ![main](https://github.com/user-attachments/assets/d9b24b0e-31c4-4046-b307-99ccfe2e1969)
 메인 화면</br>
 
